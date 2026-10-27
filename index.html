@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kartlegging av Kongevegen</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="data/kongevegen.js"></script>
+</head>
+<body>
+
+  <header>
+    <div class="header-text">
+      <h1>Kartlegging av Kongevegen</h1>
+    </div>
+    <div class="layer-toggle">
+      <button class="layer-btn active" id="btn-topo" onclick="setBasemap('topo')">Topo</button>
+      <button class="layer-btn" id="btn-flyfoto" onclick="setBasemap('flyfoto')">Flyfoto</button>
+    </div>
+  </header>
+
+  <div id="map"></div>
+
+  <script>
+    const BASEMAPS = {
+      topo: {
+        tiles: ['https://cache.kartverket.no/v1/wmts/1.0.0/topograatone/default/webmercator/{z}/{y}/{x}.png'],
+        attribution: '© <a href="https://kartverket.no">Kartverket</a>'
+      },
+      flyfoto: {
+        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+        attribution: '© <a href="https://www.esri.com">Esri</a>, Earthstar Geographics'
+      }
+    };
+
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: {
+        version: 8,
+        sources: {
+          basemap: {
+            type: 'raster',
+            tiles: BASEMAPS.topo.tiles,
+            tileSize: 256,
+            attribution: BASEMAPS.topo.attribution
+          }
+        },
+        layers: [{ id: 'basemap', type: 'raster', source: 'basemap' }]
+      },
+      bounds: [[5.7374, 60.5529], [6.6959, 60.8395]],
+      fitBoundsOptions: { padding: 40 },
+      maxZoom: 18
+    });
+
+    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+    map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }), 'bottom-left');
+
+    map.on('load', () => {
+      map.addSource('kongevegen', {
+        type: 'geojson',
+        data: KONGEVEGEN,
+        promoteId: 'fid'
+      });
+
+      map.addLayer({
+        id: 'kongevegen-shadow',
+        type: 'line',
+        source: 'kongevegen',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: { 'line-color': '#000000', 'line-width': 7, 'line-opacity': 0.25, 'line-blur': 3 }
+      });
+
+      map.addLayer({
+        id: 'kongevegen-line',
+        type: 'line',
+        source: 'kongevegen',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#e01010',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 2, 12, 4, 16, 6],
+          'line-opacity': 0.9
+        }
+      });
+
+      map.addLayer({
+        id: 'kongevegen-hover',
+        type: 'line',
+        source: 'kongevegen',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#f08030',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 4, 12, 7, 16, 10],
+          'line-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.8, 0]
+        }
+      });
+    });
+
+    // ── Popup ────────────────────────────────────────────────
+    const popup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, maxWidth: '280px' });
+    let hoveredId = null;
+
+    map.on('mousemove', 'kongevegen-line', (e) => {
+      if (e.features.length === 0) return;
+      if (hoveredId !== null)
+        map.setFeatureState({ source: 'kongevegen', id: hoveredId }, { hover: false });
+      hoveredId = e.features[0].id;
+      map.setFeatureState({ source: 'kongevegen', id: hoveredId }, { hover: true });
+    });
+
+    map.on('click', 'kongevegen-line', (e) => {
+      const props  = e.features[0].properties;
+      const fields = [
+        { label: 'Kilde',          value: props.kilde },
+        { label: 'Sekundær kilde', value: props.kilde2 },
+        { label: 'Kommentar',      value: props.kommentar }
+      ];
+      const rows = fields
+        .filter(f => f.value && f.value.trim && f.value.trim() !== '')
+        .map(f => `<div class="popup-field">
+          <span class="popup-label">${f.label}</span>
+          <span class="popup-value">${escHtml(f.value)}</span>
+        </div>`).join('');
+      popup.setLngLat(e.lngLat)
+        .setHTML(`<div class="popup-row">${rows || '<span class="popup-value empty">Ingen attributtar registrert</span>'}</div>`)
+        .addTo(map);
+    });
+
+    map.on('mouseenter', 'kongevegen-line', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'kongevegen-line', () => {
+      map.getCanvas().style.cursor = '';
+      if (hoveredId !== null) {
+        map.setFeatureState({ source: 'kongevegen', id: hoveredId }, { hover: false });
+        hoveredId = null;
+      }
+    });
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Basemap toggle ───────────────────────────────────────
+    function setBasemap(name) {
+      map.getSource('basemap').setTiles(BASEMAPS[name].tiles);
+      document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('btn-' + name).classList.add('active');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #1a1a1a;
+  color: #f0ece4;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+header {
+  background: #1e1b18;
+  border-bottom: 1px solid #3a3530;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+header h1 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #f0ece4;
+}
+
+header p {
+  font-size: 0.75rem;
+  color: #8a8078;
+  margin-top: 1px;
+}
+
+.header-text {
+  flex: 1;
+}
+
+.layer-toggle {
+  display: flex;
+  gap: 6px;
+}
+
+.layer-btn {
+  background: #2e2a26;
+  border: 1px solid #3a3530;
+  color: #c8c0b4;
+  font-size: 0.75rem;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.layer-btn:hover {
+  background: #3a3530;
+  color: #f0ece4;
+}
+
+.layer-btn.active {
+  background: #8b4513;
+  border-color: #a0522d;
+  color: #fff;
+}
+
+/* ── Map ─────────────────────────────────────────────────── */
+#map {
+  flex: 1;
+  width: 100%;
+}
+
+/* ── Popup ───────────────────────────────────────────────── */
+.maplibregl-popup-content {
+  background: #1e1b18;
+  border: 1px solid #3a3530;
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: #f0ece4;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.82rem;
+  min-width: 180px;
+  max-width: 260px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+
+.maplibregl-popup-tip {
+  border-top-color: #3a3530 !important;
+  border-bottom-color: #3a3530 !important;
+}
+
+.popup-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.popup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.popup-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #8a8078;
+}
+
+.popup-value {
+  color: #e8e0d4;
+  line-height: 1.4;
+}
+
+.popup-value.empty {
+  color: #555;
+  font-style: italic;
+}
+
+.maplibregl-popup-close-button {
+  color: #8a8078;
+  font-size: 16px;
+  right: 8px;
+  top: 6px;
+}
+
+.maplibregl-popup-close-button:hover {
+  color: #f0ece4;
+  background: transparent;
+}
+
+/* ── Attribution ─────────────────────────────────────────── */
+.maplibregl-ctrl-attrib {
+  background: rgba(30,27,24,0.85) !important;
+  color: #8a8078 !important;
+}
+
+.maplibregl-ctrl-attrib a {
+  color: #a09080 !important;
+}
