@@ -58,10 +58,14 @@
             attribution: BASEMAPS.topo.attribution
           }
         },
-        layers: [{ id: 'basemap', type: 'raster', source: 'basemap' }]
+        layers: [
+          { id: 'background', type: 'background', paint: { 'background-color': '#d4cfc9' } },
+          { id: 'basemap', type: 'raster', source: 'basemap' }
+        ]
       },
       bounds: [[5.7374, 60.5529], [6.6959, 60.8395]],
       fitBoundsOptions: { padding: 40 },
+      minZoom: 5,
       maxZoom: 18
     });
 
