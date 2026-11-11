@@ -135,6 +135,42 @@ header p {
   background: transparent;
 }
 
+/* ── Legend ──────────────────────────────────────────────── */
+#legend {
+  position: absolute;
+  bottom: 36px;
+  right: 12px;
+  background: #1e1b18;
+  border: 1px solid #3a3530;
+  border-radius: 6px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  z-index: 5;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legend-line {
+  display: block;
+  width: 28px;
+  height: 4px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.legend-label {
+  font-size: 0.78rem;
+  color: #c8c0b4;
+  white-space: nowrap;
+}
+
 /* ── Attribution ─────────────────────────────────────────── */
 .maplibregl-ctrl-attrib {
   background: rgba(30,27,24,0.85) !important;

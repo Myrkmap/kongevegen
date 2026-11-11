@@ -23,6 +23,17 @@
 
   <div id="map"></div>
 
+  <div id="legend">
+    <div class="legend-item">
+      <span class="legend-line" style="background:#e01010;"></span>
+      <span class="legend-label">Ordinær veg</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-line" style="background:#1060e0;"></span>
+      <span class="legend-label">Reserveveg</span>
+    </div>
+  </div>
+
   <script>
     const BASEMAPS = {
       topo: {
@@ -76,9 +87,23 @@
         id: 'kongevegen-line',
         type: 'line',
         source: 'kongevegen',
+        filter: ['!=', ['get', 'Reserveveg'], true],
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
           'line-color': '#e01010',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 2, 12, 4, 16, 6],
+          'line-opacity': 0.9
+        }
+      });
+
+      map.addLayer({
+        id: 'kongevegen-reserveveg',
+        type: 'line',
+        source: 'kongevegen',
+        filter: ['==', ['get', 'Reserveveg'], true],
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#1060e0',
           'line-width': ['interpolate', ['linear'], ['zoom'], 8, 2, 12, 4, 16, 6],
           'line-opacity': 0.9
         }
@@ -101,39 +126,46 @@
     const popup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, maxWidth: '280px' });
     let hoveredId = null;
 
-    map.on('mousemove', 'kongevegen-line', (e) => {
-      if (e.features.length === 0) return;
-      if (hoveredId !== null)
-        map.setFeatureState({ source: 'kongevegen', id: hoveredId }, { hover: false });
-      hoveredId = e.features[0].id;
-      map.setFeatureState({ source: 'kongevegen', id: hoveredId }, { hover: true });
-    });
+    const LINE_LAYERS = ['kongevegen-line', 'kongevegen-reserveveg'];
 
-    map.on('click', 'kongevegen-line', (e) => {
-      const props  = e.features[0].properties;
-      const fields = [
-        { label: 'Kilde',          value: props.kilde },
-        { label: 'Sekundær kilde', value: props.kilde2 },
-        { label: 'Kommentar',      value: props.kommentar }
-      ];
-      const rows = fields
-        .filter(f => f.value && f.value.trim && f.value.trim() !== '')
-        .map(f => `<div class="popup-field">
-          <span class="popup-label">${f.label}</span>
-          <span class="popup-value">${escHtml(f.value)}</span>
-        </div>`).join('');
-      popup.setLngLat(e.lngLat)
-        .setHTML(`<div class="popup-row">${rows || '<span class="popup-value empty">Ingen attributtar registrert</span>'}</div>`)
-        .addTo(map);
-    });
+    LINE_LAYERS.forEach(layer => {
+      map.on('mousemove', layer, (e) => {
+        if (e.features.length === 0) return;
+        if (hoveredId !== null)
+          map.setFeatureState({ source: 'kongevegen', id: hoveredId }, { hover: false });
+        hoveredId = e.features[0].id;
+        map.setFeatureState({ source: 'kongevegen', id: hoveredId }, { hover: true });
+      });
 
-    map.on('mouseenter', 'kongevegen-line', () => { map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', 'kongevegen-line', () => {
-      map.getCanvas().style.cursor = '';
-      if (hoveredId !== null) {
-        map.setFeatureState({ source: 'kongevegen', id: hoveredId }, { hover: false });
-        hoveredId = null;
-      }
+      map.on('click', layer, (e) => {
+        const props = e.features[0].properties;
+        const vegtype = props.Reserveveg === true || props.Reserveveg === 'true'
+          ? 'Reserveveg' : 'Ordinær veg';
+        const fields = [
+          { label: 'Type',           value: vegtype },
+          { label: 'Kilde',          value: props.kilde },
+          { label: 'Sekundær kilde', value: props.kilde2 },
+          { label: 'Kommentar',      value: props.kommentar }
+        ];
+        const rows = fields
+          .filter(f => f.value && f.value.trim && f.value.trim() !== '')
+          .map(f => `<div class="popup-field">
+            <span class="popup-label">${f.label}</span>
+            <span class="popup-value">${escHtml(f.value)}</span>
+          </div>`).join('');
+        popup.setLngLat(e.lngLat)
+          .setHTML(`<div class="popup-row">${rows || '<span class="popup-value empty">Ingen attributtar registrert</span>'}</div>`)
+          .addTo(map);
+      });
+
+      map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', layer, () => {
+        map.getCanvas().style.cursor = '';
+        if (hoveredId !== null) {
+          map.setFeatureState({ source: 'kongevegen', id: hoveredId }, { hover: false });
+          hoveredId = null;
+        }
+      });
     });
 
     function escHtml(s) {
